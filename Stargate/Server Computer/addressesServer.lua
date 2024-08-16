@@ -13,7 +13,7 @@ local REDNET_HOSTNAME = "StargateAddressesServer";
 local REQUEST_PROTOCOL = "StargateAddressesRequest";
 local REPLY_PROTOCOL = "StargateAddressesReply";
 
-ADDRESSES = {
+local ADDRESSES = {
     --[1] Address Name
     --[2] Address Code
     --[3] Whitelisted Player names (leave empty to allow all)
