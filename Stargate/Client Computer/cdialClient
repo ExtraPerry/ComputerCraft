@@ -1,3 +1,5 @@
+os.sleep(1);
+
 local SIDES = {
     LEFT = "left",
     RIGHT ="right",
@@ -357,11 +359,18 @@ local function checkReceiveNetwordAddresses()
     end
 end
 
+--Initial Setup--
 clearScreen();
---Main Loops--
 chatBox.sendMessage("Chat Dialer Booting Up", CHATBOX_NAME, CHATBOX_BRACKETS, CHATBOX_COLOUR, CHATBOX_RANGE);
-clearScreen();
 syncRequestNetwordAddresses();
+parallel.waitForAny(
+    checkReceiveNetwordAddresses,
+    function ()
+        os.sleep(1.5);
+    end
+);
+
+--Main Loops--
 while(true)
 do
     id = nil;
