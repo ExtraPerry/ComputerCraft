@@ -1,5 +1,3 @@
-os.sleep(1);
-
 local SIDES = {
     LEFT = "left",
     RIGHT ="right",
@@ -9,20 +7,22 @@ local SIDES = {
     TOP = "top"
 };
 
+--User settings
 local MODEM_SIDE = SIDES.TOP;
 local REDNET_PROTOCOL = "StargateAddressesComs";
 local REDNET_HOSTNAME = "StargateAddressesServer";
 local REQUEST_PROTOCOL = "StargateAddressesRequest";
 local REPLY_PROTOCOL = "StargateAddressesReply";
-local LOCATION_NAME = "STARGATE LOCATION HERE";
+local LOCATION_NAME = "CHANGE THIS";
 
-local DETECTION_RANGE = 8;
+local DETECTION_RANGE = 12;
 local CHATBOX_NAME = "&bcSGC";
 local CHATBOX_BRACKETS = "[]";
 local CHATBOX_COLOUR = "&4";
 local CHATBOX_RANGE = 48;
 
 local ADDRESSES = {
+    --These are the addresses you want your computer to know in the even that Network addresses cannot be found/used
     --[1] Address Name
     --[2] Address Code
     --[3] Whitelisted Player names (leave empty to allow all)
@@ -52,48 +52,50 @@ local ADDRESSES = {
 };
 
 local INTERFACE_TYPES = {
-    "basic_interface",
-    "crystal_interface",
-    "advanced_crystal_interface"
+    BASIC = "basic_interface",
+    CRYSTAL = "crystal_interface",
+    ADVANCED = "advanced_crystal_interface"
 };
 
 local STARGATE_TYPES = {
-    "sgjourney:classic_stargate",
-    "sgjourney:milky_way_stargate",
-    "sgjourney:pegasus_stargate",
-    "sgjourney:universe_stargate",
-    "sgjourney:tollan_stargate"
+    CLASSIC = "sgjourney:classic_stargate",
+    MILKY_WAY = "sgjourney:milky_way_stargate",
+    PEGASUS = "sgjourney:pegasus_stargate",
+    UNIVERSE = "sgjourney:universe_stargate",
+    TOLLAN = "sgjourney:tollan_stargate"
 };
+
+--End of User settings
+print("System booting up");
+os.sleep(1);
 
 --Open up the modem for communication
 rednet.open(MODEM_SIDE);
 
 --Find Advanced Peripherals
 local playerDetector = peripheral.find("playerDetector");
-if playerDetector == nil then 
-    error("Player Detector not found", 0) 
+if playerDetector == nil then
+    error("Player Detector not found", 0);
 end
 local chatBox = peripheral.find("chatBox");
-if chatBox == nil then 
-    error("Chat Box not found", 0) 
+if chatBox == nil then
+    error("Chat Box not found", 0);
 end
 
 --Find the proper interface & Stargate Type
-print("Checking for \"" .. INTERFACE_TYPES[1] .. "\"");
-local interfaceType = INTERFACE_TYPES[1];
+print("Checking for \"" .. INTERFACE_TYPES.BASIC .. "\"");
+local interfaceType = INTERFACE_TYPES.BASIC;
 local interface = peripheral.find(interfaceType);
 if interface == nil then
-    print("\"" .. INTERFACE_TYPES[1] .. "\" was not found attempting to find another");
-    print("Checking for \"" .. INTERFACE_TYPES[2] .. "\"");
-    interfaceType = INTERFACE_TYPES[2];
+    print("\"" .. INTERFACE_TYPES.BASIC .. "\" was not found attempting to find another\nChecking for \"" .. INTERFACE_TYPES.CRYSTAL .. "\"");
+    interfaceType = INTERFACE_TYPES.CRYSTAL;
     interface = peripheral.find(interfaceType);
 elseif interface == nil then
-    print("\"" .. INTERFACE_TYPES[2] .. "\" was not found attempting to find another");
-    print("Checking for \"" .. INTERFACE_TYPES[3] .. "\"");
-    interfaceType = INTERFACE_TYPES[3];
+    print("\"" .. INTERFACE_TYPES.CRYSTAL .. "\" was not found attempting to find another\nChecking for \"" .. INTERFACE_TYPES.ADVANCED .. "\"");
+    interfaceType = INTERFACE_TYPES.ADVANCED;
     interface = peripheral.find(interfaceType);
 elseif interface == nil then
-    print("\"" .. INTERFACE_TYPES[3] .. "\" was not found attempting to find another");
+    print("\"" .. INTERFACE_TYPES.ADVANCED .. "\" was not found attempting to find another");
     error("No interfaces were found", 0);
 end
 print("\"" .. interfaceType .. "\" was found");
@@ -101,11 +103,11 @@ StargateType = interface.getStargateType();
 print("interface Type : " .. interfaceType);
 print("Stargate Type : " .. StargateType);
 
---Global variables & Functions--
+--Local variables & Functions--
 local Network_Addresses = nil;
 local OldDetectedPlayers = {};
 local CurrentDetectedPlayers = {};
-local id = nil;
+local dialSelection = nil;
 
 local function resetStargate()
     interface.disconnectStargate();
@@ -118,53 +120,55 @@ end
 local function dialStargate(address, isFastDial)
     local addressLength = #address;
 
-    addressString = "";
+    local addressString = "";
     for i = 1, addressLength, 1 do
         addressString = addressString .. address[i];
-        if i ~= addresselength then
+        if i ~= addressLength then
             addressString = addressString .. ", ";
         end
     end
     print("Attempting to dial : [" .. addressString .. "]");
     resetStargate();
-    
-    if StargateType ~= STARGATE_TYPES[4] then
+
+    if StargateType ~= STARGATE_TYPES.UNIVERSE then
         if addressLength == 8 then
             interface.setChevronConfiguration({1, 2, 3, 4, 6, 7, 8, 5});
         elseif addressLength == 9 then
             interface.setChevronConfiguration({1, 2, 3, 4, 5, 6, 7, 8});
         end
     end
- 
+
     local start = interface.getChevronsEngaged() + 1;
- 
-    if StargateType == STARGATE_TYPES[2] and isFastDial == false then
+
+    if (StargateType == STARGATE_TYPES.MILKY_WAY and isFastDial == false) or (interfaceType == INTERFACE_TYPES.BASIC and STARGATE_TYPES.MILKY_WAY) then
+        --Slow dial with ring rotation
         for chevron = start,addressLength,1
         do
             local symbol = address[chevron];
- 
+
             if chevron % 2 == 0 then
                 interface.rotateClockwise(symbol);
             else
                 interface.rotateAntiClockwise(symbol);
             end
- 
+
             while(not interface.isCurrentSymbol(symbol))
             do
                 os.sleep(0);
             end
- 
+
             interface.endRotation();
- 
+
             os.sleep(1);
             interface.openChevron();
- 
+
             os.sleep(0.5);
             interface.closeChevron();
             print("Chevron[" .. chevron .. "] Engaged !!!");
             sleep(1);
         end
     else
+        --Fast dial with no ring rotation but only slightly delayed light up motion
         for chevron = start,addressLength,1
         do
             local symbol = address[chevron];
@@ -195,8 +199,8 @@ local function playerFormatedToastJoin(username)
         {text = " to view destination ids.", color = "yellow"},
 
         {text = "\nType ", color = "yellow"},
-        {text = "![id]", color = "white"},
-        {text = " (list id) to dial gate.", color = "yellow"},
+        {text = "![dialSelection]", color = "white"},
+        {text = " (list dialSelection) to dial gate.", color = "yellow"},
 
         {text = "\nType ", color = "yellow"},
         {text = "!d", color = "white"},
@@ -257,33 +261,42 @@ local function listCommandResponse(username)
     os.sleep(0.2);
 end
 
+local function playerNotOnAddressWhitelistResponse(username)
+    local message = {
+        {text = "You are not allowed to dial this address", color = "red"}
+    };
+    local messageJson = textutils.serialiseJSON(message);
+    chatBox.sendFormattedMessageToPlayer(messageJson, username, CHATBOX_NAME, CHATBOX_BRACKETS, CHATBOX_COLOUR, CHATBOX_RANGE);
+    os.sleep(0.2);
+end
+
 local function checkIfPlayerClose(username)
     for _, v in ipairs(CurrentDetectedPlayers) do
         if v == username then
             return true;
         end
     end
-    return fasle;
+    return false;
 end
 
 local function syncRequestNetwordAddresses()
     local lookup_result = rednet.lookup(REDNET_PROTOCOL, REDNET_HOSTNAME);
-    if lookup_result == nil then
-        print("Could not find Addresses Server");
-        print("Protocol : " .. REDNET_PROTOCOL);
-        print("Hostname : " .. REDNET_HOSTNAME);
-        print("Switching to hardcoded Addresses");
-    else
+    if lookup_result ~= nil then
         print("RedNet Network Scanned");
         print("Protocol : " .. REDNET_PROTOCOL);
         print("Hostname : " .. REDNET_HOSTNAME);
-        print("Found Host with ID [" .. lookup_result .. "]");
+        print("Found Host with dialSelection [" .. lookup_result .. "]");
 
         rednet.send(lookup_result, LOCATION_NAME, REQUEST_PROTOCOL);
-        print("Sent message to ID [" .. lookup_result .. "]");
+        print("Sent message to dialSelection [" .. lookup_result .. "]");
         print("Protocol : " .. REQUEST_PROTOCOL);
         print("Message : " .. LOCATION_NAME);
+        return;
     end
+    print("Could not find Addresses Server");
+    print("Protocol : " .. REDNET_PROTOCOL);
+    print("Hostname : " .. REDNET_HOSTNAME);
+    print("Switching to hardcoded Addresses");
 end
 
 --Main Functions--
@@ -294,14 +307,17 @@ local function checkChatEvent()
         if (content == "l" or content == "list") then
             print("[" .. username .. "] used !list");
             listCommandResponse(username);
+            return;
         end
         if (content == "d" or content == "disconnect") then
             print("[" .. username .. "] used !disconnect");
             resetStargate();
+            return;
         end
         if (content == "s" or content == "sync") then
             print("[" .. username .. "] used !sync");
             syncRequestNetwordAddresses();
+            return;
         end
         local targetId = tonumber(content);
         local selectedAddressesList = ADDRESSES;
@@ -309,8 +325,24 @@ local function checkChatEvent()
             selectedAddressesList = Network_Addresses;
         end
         if (targetId ~= nil and targetId > 0 and targetId <= #selectedAddressesList) then
-            print("[" .. username .. "] selected destination id : " .. targetId .. "-" .. selectedAddressesList[targetId][1]);
-            id = targetId;
+            print("[" .. username .. "] selected destination dialSelection : " .. targetId .. "-" .. selectedAddressesList[targetId][1]);
+            local addressWhitelist = selectedAddressesList[targetId][3];
+            if addressWhitelist ~= nill then
+                local isAllowed = false;
+                for _, v in ipairs(addressWhitelist) do
+                    if v == username then
+                        isAllowed = true;
+                        break;
+                    end
+                end
+                if not isAllowed then
+                    print("Player [" .. username .. "] is not on the whitlist for this address");
+                    playerNotOnAddressWhitelistResponse(username);
+                    return;
+                end
+            end
+            dialSelection = targetId;
+            return;
         end
     end
 end
@@ -344,7 +376,7 @@ local function checkPlayersCloseByAndNotify()
             playerFormatedToastLeave(v1);
         end
     end
-    
+
     OldDetectedPlayers = CurrentDetectedPlayers;
     os.sleep(0.75);
 end
@@ -352,7 +384,7 @@ end
 local function checkReceiveNetwordAddresses()
     local senderId, message, protocol = rednet.receive(REPLY_PROTOCOL);
     if protocol == REPLY_PROTOCOL then
-        print("Received addresses request from ID [" .. senderId .. "]");
+        print("Received addresses request from dialSelection [" .. senderId .. "]");
         Network_Addresses = textutils.unserialise(message);
         print("Message table length : [" .. #Network_Addresses .. "]");
         chatBox.sendMessage("Chat Dialer Sync'ed Up", CHATBOX_NAME, CHATBOX_BRACKETS, CHATBOX_COLOUR, CHATBOX_RANGE);
@@ -373,8 +405,8 @@ parallel.waitForAny(
 --Main Loops--
 while(true)
 do
-    id = nil;
-    while(id == nil)
+    dialSelection = nil;
+    while(dialSelection == nil)
     do
         parallel.waitForAny(
             checkReceiveNetwordAddresses,
@@ -383,8 +415,8 @@ do
         );
     end
     if Network_Addresses ~= nil and #Network_Addresses ~= 0 then
-        dialStargate(Network_Addresses[id][2], true);
+        dialStargate(Network_Addresses[dialSelection][2], true);
     else
-        dialStargate(ADDRESSES[id][2], true);
+        dialStargate(ADDRESSES[dialSelection][2], true);
     end
 end

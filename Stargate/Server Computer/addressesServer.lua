@@ -41,10 +41,11 @@ local ADDRESSES = {
     {"AE2 Spatial Storage", {7, 10, 34, 12, 19, 21, 0} ,{}},
     {"Reality Marble", {26, 30, 1, 27, 28, 7, 0} ,{}},
     --Private Server Stuff (Custom Addresses)--
-    {"Chulak Base", {18, 11, 28, 26, 24, 35, 9, 25, 0} ,{}},
+    {"Chulak Base", {18, 11, 28, 26, 24, 35, 9, 25, 0} ,{"ExtraPerry"}},
     {"Spawn", {30, 17, 27, 28, 14, 25, 20, 2, 0} ,{}},
-    {"Shama's old Home", {21, 9, 4, 25, 30, 8, 15, 26, 0} ,{}},
-    {"Ancient City", {21, 15, 24, 25, 34, 26, 11, 28, 0} ,{}}
+    {"Shama's old Home", {21, 9, 4, 25, 30, 8, 15, 26, 0} ,{"ExtraPerry"}},
+    {"Ancient City", {21, 15, 24, 25, 34, 26, 11, 28, 0} ,{"ExtraPerry"}},
+    {"Ocean Platform", {29, 35, 32, 10, 23, 1, 3, 33, 0} ,{"ExtraPerry"}}
 };
 
 function clearScreen()
